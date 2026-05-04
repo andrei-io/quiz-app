@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mock Quiz App</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-top">
+          <h1>Mock Quiz App</h1>
+          <div class="controls">
+            <div class="skip-controls">
+              <input type="number" id="skip-input" min="1" placeholder="Q#" />
+              <button id="skip-btn" class="btn">Skip To</button>
+            </div>
+            <label for="file-upload" class="btn">Upload JSON</label>
+            <input
+              type="file"
+              id="file-upload"
+              accept=".json"
+              style="display: none"
+            />
+            <button id="reset-btn" class="btn btn-danger">Reset</button>
+          </div>
+        </div>
+        <div class="stats">
+          <p>Score: <strong id="score-percent">0%</strong></p>
+          <p>Answered: <strong id="answered-count">0</strong></p>
+        </div>
+      </header>
+
+      <main id="quiz-container">
+        <div id="message-container" class="message">
+          Loading questions... If nothing happens, please upload your JSON file.
+        </div>
+        <div id="question-area" style="display: none">
+          <h2 id="q-title"></h2>
+          <span id="q-topic" class="badge"></span>
+          <p id="q-text" class="question-text"></p>
+          <div id="q-images" class="image-gallery"></div>
+
+          <div id="q-interaction-area"></div>
+
+          <div id="q-feedback-area" style="display: none" class="feedback-area">
+            <h3 id="feedback-title"></h3>
+            <div id="q-answer-images" class="image-gallery"></div>
+            <p id="q-explanation"></p>
+            <div
+              id="self-mark-controls"
+              style="display: none"
+              class="action-buttons"
+            >
+              <button id="mark-correct-btn" class="btn btn-success">
+                I answered correctly
+              </button>
+              <button id="mark-incorrect-btn" class="btn btn-danger">
+                I answered incorrectly
+              </button>
+            </div>
+            <button id="next-btn" class="btn btn-primary" style="display: none">
+              Next Question
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

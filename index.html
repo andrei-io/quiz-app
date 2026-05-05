@@ -10,12 +10,18 @@
     <div class="container">
       <header>
         <div class="header-top">
-          <h1>Mock Quiz App</h1>
+          <h1 id="course-title">Mock Quiz App</h1>
           <div class="controls">
-            <div class="skip-controls">
-              <input type="number" id="skip-input" min="1" placeholder="Q#" />
-              <button id="skip-btn" class="btn">Skip To</button>
-            </div>
+            <!-- Navigation Controls -->
+            <select id="unit-select" class="nav-select">
+              <option value="all">All Units</option>
+            </select>
+            <select id="question-select" class="nav-select">
+              <option value="">-- Select Question --</option>
+            </select>
+            <button id="random-btn" class="btn btn-secondary">Random Quiz</button>
+            
+            <!-- File & Data Controls -->
             <label for="file-upload" class="btn">Upload JSON</label>
             <input
               type="file"
@@ -28,7 +34,7 @@
         </div>
         <div class="stats">
           <p>Score: <strong id="score-percent">0%</strong></p>
-          <p>Answered: <strong id="answered-count">0</strong></p>
+          <p>Answered: <strong id="answered-count">0 / 0</strong></p>
         </div>
       </header>
 

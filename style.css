@@ -149,3 +149,56 @@ h1, h2, h3 {
     color: #666;
     padding: 40px 0;
 }
+/* --- Ordering Question Styles --- */
+.ordering-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+}
+
+.ordering-item {
+    display: flex;
+    align-items: center;
+    background: #fdfdfd;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.ordering-item:hover {
+    background: #f1f1f1;
+}
+
+.order-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-right: 15px;
+}
+
+.btn-order {
+    background: #eef2f5;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    color: #333;
+    transition: all 0.2s;
+}
+
+.btn-order:hover:not(:disabled) {
+    background: #d5d8dc;
+}
+
+.btn-order:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.order-text {
+    flex-grow: 1;
+    font-size: 1rem;
+}

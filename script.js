@@ -36,7 +36,6 @@ const DOM = {
 function init() {
   loadProgress();
 
-  // Try to load default file
   fetch(currentQuizName)
     .then((response) => {
       if (!response.ok) throw new Error("Local file not found");
@@ -67,14 +66,19 @@ function processCourseData(data) {
   DOM.courseTitle.textContent = data.course || "Mock Quiz App";
   allQuestions = [];
 
-  // Flatten nested JSON into an array
   data.units.forEach((u) => {
     u.questions.forEach((q, idx) => {
       let choices = q.options || {};
+      let correctAns = q.correctAnswers || [];
       
       // Auto-generate true/false options if missing
       if (q.type === "true_false" && Object.keys(choices).length === 0) {
         choices = { "True": "True", "False": "False" };
+      }
+
+      // If ordering question has no correctAnswers array, assume the sorted keys are the correct order
+      if (q.type === "ordering" && correctAns.length === 0) {
+        correctAns = Object.keys(choices).sort();
       }
 
       allQuestions.push({
@@ -84,7 +88,7 @@ function processCourseData(data) {
         questionText: q.question,
         type: q.type,
         choices: choices,
-        correctAnswers: q.correctAnswers || [],
+        correctAnswers: correctAns,
         explanation: q.explanation || ""
       });
     });
@@ -118,7 +122,6 @@ function updateQuestionDropdown() {
     DOM.questionSelect.innerHTML += `<option value="${q.title}">${status} ${q.title}</option>`;
   });
   
-  // Sync select value with currently displayed question
   if (currentQuestion) {
       DOM.questionSelect.value = currentQuestion.title;
   }
@@ -184,9 +187,8 @@ function generateRandomQuiz() {
   progress = {};
   saveProgress();
 
-  // Shuffle and slice
   const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
-  DOM.unitSelect.value = "all"; // Reset UI
+  DOM.unitSelect.value = "all";
   setPlaylist(shuffled.slice(0, count));
 }
 
@@ -198,10 +200,8 @@ function loadNextQuestion() {
   DOM.qImages.innerHTML = "";
   DOM.qAnswerImages.innerHTML = "";
 
-  // 1. Find index of current question in the playlist
   let currentIdx = currentPlaylist.findIndex(q => currentQuestion && q.title === currentQuestion.title);
   
-  // 2. Search forward for unanswered
   let nextQ = null;
   for (let i = currentIdx + 1; i < currentPlaylist.length; i++) {
     if (!(currentPlaylist[i].title in progress)) {
@@ -210,7 +210,6 @@ function loadNextQuestion() {
     }
   }
 
-  // 3. Search backward if none found forward
   if (!nextQ) {
     for (let i = 0; i < currentIdx; i++) {
       if (!(currentPlaylist[i].title in progress)) {
@@ -220,10 +219,8 @@ function loadNextQuestion() {
     }
   }
 
-  // 4. Handle end state
   if (!nextQ) {
     if (currentQuestion && !(currentQuestion.title in progress)) {
-       // Just stay on current if it somehow remains unanswered
        return;
     }
     DOM.quizArea.style.display = "none";
@@ -240,12 +237,11 @@ function renderQuestion(q) {
   DOM.quizArea.style.display = "block";
   DOM.msgContainer.style.display = "none";
   
-  DOM.questionSelect.value = q.title; // Sync dropdown
+  DOM.questionSelect.value = q.title;
   DOM.qTitle.textContent = q.title;
   DOM.qTopic.textContent = `Topic: ${q.topic}`;
   DOM.qText.textContent = q.questionText.replace("//IMG//", "");
 
-  // Render question images if they exist
   if (q.questionImages && q.questionImages.length > 0) {
     q.questionImages.forEach((src) => {
       const img = document.createElement("img");
@@ -254,17 +250,19 @@ function renderQuestion(q) {
     });
   }
 
-  // Reset Interaction UI
   DOM.qFeedback.style.display = "none";
   DOM.qInteraction.innerHTML = "";
 
   if (q.type === "multiple_choice" || q.type === "single_choice" || q.type === "true_false") {
     renderStandardChoices(q);
+  } else if (q.type === "ordering") {
+    renderOrdering(q);
   } else {
     renderSelfMarking(q);
   }
 }
 
+// --- Interaction Rendering ---
 function renderStandardChoices(q) {
   const form = document.createElement("form");
   const isMultiSelect = q.type === "multiple_choice";
@@ -311,6 +309,89 @@ function renderStandardChoices(q) {
   DOM.qInteraction.appendChild(form);
 }
 
+function renderOrdering(q) {
+  const container = document.createElement("div");
+  container.className = "ordering-container";
+
+  const p = document.createElement("p");
+  p.textContent = "Use the Up/Down arrows to arrange the items in the correct order.";
+  p.style.fontStyle = "italic";
+  p.style.marginBottom = "15px";
+  container.appendChild(p);
+
+  const list = document.createElement("ul");
+  list.className = "ordering-list";
+
+  // Shuffle the initial display
+  let currentOrder = [...Object.keys(q.choices)].sort(() => Math.random() - 0.5);
+
+  function renderList() {
+    list.innerHTML = "";
+    currentOrder.forEach((key, index) => {
+      const li = document.createElement("li");
+      li.className = "ordering-item";
+      li.dataset.key = key;
+
+      const controls = document.createElement("div");
+      controls.className = "order-controls";
+
+      const btnUp = document.createElement("button");
+      btnUp.className = "btn-order";
+      btnUp.innerHTML = "▲";
+      btnUp.disabled = index === 0;
+      btnUp.onclick = () => moveItem(index, -1);
+
+      const btnDown = document.createElement("button");
+      btnDown.className = "btn-order";
+      btnDown.innerHTML = "▼";
+      btnDown.disabled = index === currentOrder.length - 1;
+      btnDown.onclick = () => moveItem(index, 1);
+
+      controls.appendChild(btnUp);
+      controls.appendChild(btnDown);
+
+      const text = document.createElement("div");
+      text.className = "order-text";
+      text.textContent = q.choices[key];
+
+      li.appendChild(controls);
+      li.appendChild(text);
+      list.appendChild(li);
+    });
+  }
+
+  function moveItem(index, direction) {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= currentOrder.length) return;
+    
+    const temp = currentOrder[index];
+    currentOrder[index] = currentOrder[newIndex];
+    currentOrder[newIndex] = temp;
+    
+    renderList();
+  }
+
+  renderList();
+  container.appendChild(list);
+
+  const submitBtn = document.createElement("button");
+  submitBtn.className = "btn btn-primary";
+  submitBtn.textContent = "Submit Answer";
+  container.appendChild(submitBtn);
+
+  submitBtn.addEventListener("click", () => {
+    // Compare strictly by array sequence
+    const isCorrect = JSON.stringify(currentOrder) === JSON.stringify(q.correctAnswers);
+    
+    handleAnswer(isCorrect);
+    
+    submitBtn.disabled = true;
+    list.querySelectorAll('.btn-order').forEach(btn => btn.disabled = true);
+  });
+
+  DOM.qInteraction.appendChild(container);
+}
+
 function renderSelfMarking(q) {
   const revealBtn = document.createElement("button");
   revealBtn.className = "btn btn-primary";
@@ -339,17 +420,29 @@ function recordSelfMark(isCorrect) {
 function showFeedback(autoGradeResult) {
   DOM.qFeedback.style.display = "block";
 
+  // Build the correct answer text conditionally based on type
+  let correctAnswerText = "";
+  if (currentQuestion.correctAnswers && currentQuestion.correctAnswers.length > 0) {
+    if (currentQuestion.type === "ordering") {
+      // Connect them with arrows for visual clarity
+      correctAnswerText = currentQuestion.correctAnswers.map(key => `[${key}] ${currentQuestion.choices[key]}`).join(" ➔ ");
+    } else {
+      correctAnswerText = currentQuestion.correctAnswers.slice().sort().join(", ");
+    }
+  }
+
   if (autoGradeResult !== null) {
-    DOM.feedbackTitle.textContent = autoGradeResult
-      ? "✅ Correct!"
-      : `❌ Incorrect! (Correct answer: ${currentQuestion.correctAnswers.sort().join(", ")})`;
+    DOM.feedbackTitle.textContent = autoGradeResult ? "✅ Correct!" : "❌ Incorrect!";
+    if (!autoGradeResult && correctAnswerText) {
+       DOM.feedbackTitle.textContent += ` (Correct: ${correctAnswerText})`;
+    }
     DOM.feedbackTitle.style.color = autoGradeResult ? "var(--success)" : "var(--danger)";
     DOM.nextBtn.style.display = "block";
   } else {
     DOM.feedbackTitle.textContent = "Answer Reveal:";
     DOM.feedbackTitle.style.color = "inherit";
-    if (currentQuestion.correctAnswers && currentQuestion.correctAnswers.length > 0) {
-      DOM.feedbackTitle.textContent += ` ${currentQuestion.correctAnswers.sort().join(", ")}`;
+    if (correctAnswerText) {
+      DOM.feedbackTitle.textContent += ` ${correctAnswerText}`;
     }
     DOM.selfMarkControls.style.display = "flex";
   }
